@@ -1,3 +1,22 @@
+### This is a fork
+This repo is a fork of <a href="https://github.com/barteksc/AndroidPdfViewer">https://github.com/barteksc/AndroidPdfViewer</a>.
+
+<b>Why?</b>
+
+After the undersigned introduced the "jump to page" functionality in <a href="https://github.com/xfarrow/PdfViewer">PDF Viewer</a> said functionality did not well match to the "Page Snaps" (centered pages).
+
+1. If the page snap functionality was enabled and we jumped to a page by using the provided `jumpTo()`, the page was sticked to the uppermost edge, thus not centered as the user expected.
+
+2. (1) was tried to be solved by invoking `performPageSnap()`. This centered the page but brought up two differtent errors. One was that if the zoom allowed more pages to be seen at the same time, `performPageSnap()` would have snapped to the one in the center, even if it was not the one we jumped to. The othe error was that the animation was not pleasuring when called after `jumpTo()`.
+
+To resolve this, the undersigned forked a new version of "AndroidPdfViewer", with new Library methods to manage this case, 100% compatible with the old 3.2.0-beta1. Include it with
+```
+	dependencies {
+	        implementation 'com.github.xfarrow:AndroidPdfViewer:3.2.1-xfarrow-beta'
+	}
+
+```
+<b>Warning:</b> `barteksc/AndroidPdfViewer` seems to be unmaintained/discontinued, so using the undersigned's library does not bring more vulnerabilities than the latest version (3.2.0-beta1) does. It is a beta version in turn based on an old Pdfium library (7.1.2_r36). However, if a new mantainer decides to bring back to life `barteksc/AndroidPdfViewer`, please use it and drop this.
 
 # Looking for new maintainer!
 
