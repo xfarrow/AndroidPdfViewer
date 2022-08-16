@@ -312,6 +312,101 @@ public class PDFView extends RelativeLayout {
         jumpTo(page, false);
     }
 
+    /**
+     * Jumps to a page, centers it and zooms 1x
+     */
+    public void jumpToAndResetView(int page, boolean withAnimation) {
+        if (pdfFile == null || pdfFile.getPagesCount() == 0) {
+            return;
+        }
+
+        page = pdfFile.determineValidPageNumberFrom(page);
+
+        zoomTo(1f);
+
+        float offset = snapOffsetForPage(page, SnapEdge.CENTER);
+        if (swipeVertical) {
+            if(withAnimation) {
+                animationManager.startYAnimation(currentYOffset, -offset);
+            }
+            else{
+                moveTo(currentXOffset, -offset);
+            }
+        } else {
+            if(withAnimation) {
+                animationManager.startXAnimation(currentXOffset, -offset);
+            }
+            else{
+                moveTo(-offset, currentYOffset);
+            }
+        }
+        showPage(page);
+    }
+
+    /**
+     * This method jumps to a page and sets its relative position as the same of the
+     * page calling it.
+     *
+     * For example, if you zoom on point (x,y) [points relative to the page's coordinates] and call
+     * this method, you'll find yourself on point (x,y) relative to the new page.
+     */
+    public void jumpToSameRelativePosition(int page){
+        if (pdfFile == null || pdfFile.getPagesCount() == 0) {
+            return;
+        }
+
+        page = pdfFile.determineValidPageNumberFrom(page);
+        int previousPage = getCurrentPage();
+
+        /*
+         * if pageSnap is ON, then if we jump from a page between 2 and N-1 (where N = getPageCount()),
+         * to any page, then the page we will land to will be a valid snapped position (meaning that
+         * a performPageSnap() will not change the position). This happens because the page we jump from
+         * will have itself a valid snapped position, so if the page we land to has the same relative
+         * position to the display, there is no need to execute a performPageSnap().
+         *
+         * This does not apply if the page we jump from is the last one or the last one. These
+         * pages are not snapped to the center since there is no page under or above allowing that.
+         * If we jump to a page keeping their relative position, then those might(*) not be in a valid
+         * snapped position, despite the user has the switch on.
+         *
+         * (*) if the first or last page are zoomed in enough to cover the edges, then the page we'll
+         * jump to will be in a valid position.
+         */
+        if(isPageSnap() && (previousPage == 0 || previousPage == getPageCount() - 1
+                || getCurrentOffset() == 0f))
+        {
+            // length of the visible display
+            int length = swipeVertical ? getHeight() : getWidth();
+
+            // page length (vertical or horizontal accordingly)
+            float pageLength = pdfFile.getPageLength(previousPage, zoom);
+
+            if(length >= pageLength){
+                float toSnapOffset = snapOffsetForPage(page, SnapEdge.CENTER);
+                if (swipeVertical) {
+                    moveTo(currentXOffset, -toSnapOffset);
+                } else {
+                    moveTo(-toSnapOffset, currentYOffset);
+                }
+            }
+        }
+        else {
+            float startPageOffset = -pdfFile.getPageOffset(getCurrentPage(), zoom);
+            float relativePageOffset = ((swipeVertical) ? currentYOffset : currentXOffset) - startPageOffset;
+
+            float offset = page == 0 ? 0 : -pdfFile.getPageOffset(page, zoom);
+
+            offset += relativePageOffset;
+
+            if (swipeVertical)
+                moveTo(currentXOffset, offset);
+            else
+                moveTo(offset, currentYOffset);
+        }
+        showPage(page);
+    }
+
     void showPage(int pageNb) {
         if (recycled) {
             return;
@@ -1095,6 +1190,10 @@ public class PDFView extends RelativeLayout {
 
     public float getCurrentYOffset() {
         return currentYOffset;
+    }
+
+    float getCurrentOffset(){
+        return swipeVertical ? currentYOffset : currentXOffset;
     }
 
     public float toRealScale(float size) {
